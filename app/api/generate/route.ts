@@ -35,13 +35,40 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await imageFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    console.log("API: Optimizing image with Sharp...")
+    console.log("API: Processing image with Sharp for high quality...")
 
-    // Optimize image with Sharp
-    const optimizedBuffer = await sharp(buffer)
-      .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 90 })
+    // Process image with Sharp - higher quality settings
+    // Keep original dimensions if under 2048px, otherwise resize to 2048px max
+    const image = sharp(buffer)
+    const metadata = await image.metadata()
+    
+    let processedImage = image
+    
+    // Only resize if image is larger than 2048px on any side
+    if (metadata.width && metadata.height) {
+      const maxDimension = Math.max(metadata.width, metadata.height)
+      if (maxDimension > 2048) {
+        console.log(`API: Resizing from ${metadata.width}x${metadata.height} to max 2048px`)
+        processedImage = processedImage.resize(2048, 2048, { 
+          fit: "inside", 
+          withoutEnlargement: true 
+        })
+      } else {
+        console.log(`API: Keeping original size ${metadata.width}x${metadata.height}`)
+      }
+    }
+    
+    // Use PNG for better quality, or high-quality JPEG
+    const optimizedBuffer = await processedImage
+      .png({ quality: 100, compressionLevel: 6 })
       .toBuffer()
+      .catch(async () => {
+        // Fallback to high-quality JPEG if PNG fails
+        console.log("API: Falling back to high-quality JPEG")
+        return await processedImage
+          .jpeg({ quality: 98, mozjpeg: true })
+          .toBuffer()
+      })
 
     // Convert to base64 data URL for API (no storage needed initially)
     const clothingImageDataUrl = bufferToDataURL(optimizedBuffer)
