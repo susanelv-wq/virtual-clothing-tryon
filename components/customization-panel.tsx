@@ -3,12 +3,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { getAvailableModels, getModelById } from "@/lib/model-gallery"
 
 interface CustomizationOptions {
   pose: string
   skinTone: string
   bodyType: string
   background: string
+  angle: string
 }
 
 interface CustomizationPanelProps {
@@ -31,47 +33,35 @@ export function CustomizationPanel({ options, onChange }: CustomizationPanelProp
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="pose">Model Pose</Label>
+          <Label htmlFor="model">Choose Model</Label>
           <Select
-            id="pose"
-            value={options.pose}
-            onChange={(e) => updateOption("pose", e.target.value)}
+            id="model"
+            value={`${options.pose}-${options.skinTone}-${options.bodyType}`}
+            onChange={(e) => {
+              // Parse the model value correctly (format: pose-skinTone-bodyType)
+              const value = e.target.value
+              // Find the model by value to get the correct options
+              const models = getAvailableModels()
+              const selectedModel = models.find(m => m.value === value)
+              if (selectedModel) {
+                // Find the full model config to get all properties
+                const modelConfig = getModelById(selectedModel.id)
+                if (modelConfig) {
+                  onChange({
+                    ...options,
+                    pose: modelConfig.pose,
+                    skinTone: modelConfig.skinTone,
+                    bodyType: modelConfig.bodyType,
+                  })
+                }
+              }
+            }}
           >
-            <option value="standing-front">Standing (Front)</option>
-            <option value="standing-side">Standing (Side)</option>
-            <option value="standing-back">Standing (Back)</option>
-            <option value="sitting">Sitting</option>
-            <option value="walking">Walking</option>
-            <option value="casual">Casual Pose</option>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="skin-tone">Skin Tone</Label>
-          <Select
-            id="skin-tone"
-            value={options.skinTone}
-            onChange={(e) => updateOption("skinTone", e.target.value)}
-          >
-            <option value="light">Light</option>
-            <option value="medium-light">Medium Light</option>
-            <option value="medium">Medium</option>
-            <option value="medium-dark">Medium Dark</option>
-            <option value="dark">Dark</option>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="body-type">Body Type</Label>
-          <Select
-            id="body-type"
-            value={options.bodyType}
-            onChange={(e) => updateOption("bodyType", e.target.value)}
-          >
-            <option value="slim">Slim</option>
-            <option value="athletic">Athletic</option>
-            <option value="average">Average</option>
-            <option value="curvy">Curvy</option>
+            {getAvailableModels().map((model) => (
+              <option key={model.id} value={model.value}>
+                {model.name}
+              </option>
+            ))}
           </Select>
         </div>
 

@@ -8,12 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { Wand2, ArrowLeft, Download } from "lucide-react"
 import Image from "next/image"
+import { RotationControl } from "@/components/rotation-control"
 
 interface CustomizationOptions {
   pose: string
   skinTone: string
   bodyType: string
   background: string
+  angle: string // "front", "side", "back"
 }
 
 export default function GeneratePage() {
@@ -21,13 +23,16 @@ export default function GeneratePage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [uploadedFileName, setUploadedFileName] = useState<string>("")
   const [options, setOptions] = useState<CustomizationOptions>({
-    pose: "standing-front",
-    skinTone: "medium",
-    bodyType: "average",
+    pose: "standing",
+    skinTone: "light",
+    bodyType: "athletic-asian", // Default to Asian model
     background: "studio-white",
+    angle: "front", // Default to front view
   })
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
+  const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({}) // Store all 4 angles
+  const [currentViewAngle, setCurrentViewAngle] = useState<string>("front") // Current viewing angle
+  const [imageKey, setImageKey] = useState(0) // Force re-render key
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -47,97 +52,104 @@ export default function GeneratePage() {
 
     setIsGenerating(true)
     setError(null)
-    setGeneratedImage(null)
+    setGeneratedImages({})
+    setCurrentViewAngle("front")
 
     try {
-      console.log("Starting generation...")
+      console.log("Starting generation for all 4 angles...")
       
       // Convert base64 to blob
       let blob: Blob
       if (uploadedImage.startsWith("data:")) {
-        // It's already a data URL, fetch it
         const response = await fetch(uploadedImage)
         blob = await response.blob()
       } else {
-        // It's a URL, fetch it
         const response = await fetch(uploadedImage)
         blob = await response.blob()
       }
 
-      // Create FormData
-      const formData = new FormData()
-      formData.append("image", blob, uploadedFileName)
-      formData.append("pose", options.pose)
-      formData.append("skinTone", options.skinTone)
-      formData.append("bodyType", options.bodyType)
-      formData.append("background", options.background)
+      // Generate all 4 angles
+      const angles = ["front", "side", "back", "side-back"]
+      const generatedResults: Record<string, string> = {}
 
-      console.log("Calling API...")
-      
-      // Call API
-      const apiResponse = await fetch("/api/generate", {
-        method: "POST",
-        body: formData,
-      })
+      for (const angle of angles) {
+        try {
+          console.log(`Generating ${angle} view...`)
 
-      console.log("API response status:", apiResponse.status)
+          const formData = new FormData()
+          formData.append("image", blob, uploadedFileName)
+          formData.append("pose", options.pose)
+          formData.append("skinTone", options.skinTone)
+          formData.append("bodyType", options.bodyType)
+          formData.append("background", options.background)
+          formData.append("angle", angle)
 
-      if (!apiResponse.ok) {
-        const errorData = await apiResponse.json().catch(() => ({ error: "Unknown error" }))
-        const errorMessage = errorData.error || `Server error: ${apiResponse.status}`
-        console.error("API error:", errorMessage)
-        throw new Error(errorMessage)
+          const apiResponse = await fetch("/api/generate", {
+            method: "POST",
+            body: formData,
+          })
+
+          if (!apiResponse.ok) {
+            const errorData = await apiResponse.json().catch(() => ({ error: "Unknown error" }))
+            console.error(`API error for ${angle}:`, errorData.error)
+            continue // Skip this angle and continue with others
+          }
+
+          const data = await apiResponse.json()
+          
+          if (data.imageUrl) {
+            generatedResults[angle] = data.imageUrl
+            console.log(`✅ Generated ${angle} view`)
+          } else {
+            console.warn(`⚠️ No image URL for ${angle} view`)
+          }
+        } catch (angleError) {
+          console.error(`Error generating ${angle} view:`, angleError)
+          // Continue with other angles
+        }
       }
 
-      const data = await apiResponse.json()
-      console.log("API response data:", data)
-      
-      if (!data.imageUrl) {
-        const errorMsg = data.error || "No image URL returned from server"
-        console.error("Missing imageUrl:", errorMsg)
-        throw new Error(errorMsg)
+      if (Object.keys(generatedResults).length === 0) {
+        throw new Error("Failed to generate any images. Please try again.")
       }
-      
-      console.log("Setting generated image:", data.imageUrl.substring(0, 50) + "...")
-      setGeneratedImage(data.imageUrl)
-      
+
+      setGeneratedImages(generatedResults)
+      setCurrentViewAngle("front") // Start with front view
+      setImageKey(prev => prev + 1)
+      console.log("✅ All angles generated successfully:", Object.keys(generatedResults))
+
       // Store in session history
       const history = JSON.parse(sessionStorage.getItem("generationHistory") || "[]")
       history.push({
         id: Date.now(),
         originalImage: uploadedImage,
-        generatedImage: data.imageUrl,
+        generatedImages: generatedResults,
         options,
         timestamp: new Date().toISOString(),
       })
       sessionStorage.setItem("generationHistory", JSON.stringify(history))
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred"
-      console.error("Generation error:", err)
+      console.error("❌ Generation error:", err)
       setError(errorMessage)
-      // Always set a demo image so user can see something works
-      // This ensures the UI shows the uploaded image as a demo result
-      console.log("Setting fallback demo image")
-      setGeneratedImage(uploadedImage)
     } finally {
       setIsGenerating(false)
     }
   }
 
   const handleDownload = async () => {
-    if (!generatedImage) return
+    const currentImage = generatedImages[currentViewAngle]
+    if (!currentImage) return
 
     try {
       let blob: Blob
-      let filename = `virtual-tryon-${Date.now()}.png`
+      let filename = `virtual-tryon-${currentViewAngle}-${Date.now()}.png`
 
-      // Handle data URLs (base64)
-      if (generatedImage.startsWith("data:")) {
-        const response = await fetch(generatedImage)
+      if (currentImage.startsWith("data:")) {
+        const response = await fetch(currentImage)
         blob = await response.blob()
       } else {
-        // Handle regular URLs
-        const response = await fetch(generatedImage)
+        const response = await fetch(currentImage)
         if (!response.ok) {
           throw new Error("Failed to fetch image")
         }
@@ -157,6 +169,9 @@ export default function GeneratePage() {
       setError("Failed to download image. Try right-clicking and 'Save Image As'")
     }
   }
+
+  // Get current displayed image
+  const currentGeneratedImage = generatedImages[currentViewAngle] || null
 
   if (!uploadedImage) {
     return (
@@ -229,11 +244,49 @@ export default function GeneratePage() {
               {/* Debug info */}
               {process.env.NODE_ENV === "development" && (
                 <Card className="border-muted">
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-4 space-y-2">
                     <p className="text-xs text-muted-foreground">
-                      Debug: {generatedImage ? "Image set" : "No image"} | 
-                      {uploadedImage ? " Upload OK" : " No upload"}
+                      Debug: {Object.keys(generatedImages).length > 0 ? `✅ ${Object.keys(generatedImages).length} angles` : "❌ No images"} | 
+                      {uploadedImage ? " ✅ Upload OK" : " ❌ No upload"}
                     </p>
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(
+                              `/api/test-model-image?pose=${options.pose}&skinTone=${options.skinTone}&bodyType=${options.bodyType}`
+                            )
+                            const data = await response.json()
+                            console.log("Model image test:", data)
+                            alert(`Model Image Test:\n${JSON.stringify(data, null, 2)}`)
+                          } catch (err) {
+                            console.error("Test error:", err)
+                          }
+                        }}
+                      >
+                        Test Model Image URL
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch("/api/test-env")
+                            const data = await response.json()
+                            console.log("Environment test:", data)
+                            alert(`Environment Check:\n${JSON.stringify(data, null, 2)}`)
+                          } catch (err) {
+                            console.error("Test error:", err)
+                          }
+                        }}
+                      >
+                        Test API Key
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -273,36 +326,71 @@ export default function GeneratePage() {
                         </p>
                       </div>
                     </div>
-                  ) : generatedImage ? (
+                  ) : currentGeneratedImage ? (
                     <div className="space-y-4">
-                      <div className="relative aspect-[3/4] w-full rounded-lg overflow-hidden border bg-muted">
-                        {/* Always use img tag for better compatibility */}
+                      {/* 360° Rotation Control */}
+                      <RotationControl
+                        value={currentViewAngle}
+                        onChange={(angle) => {
+                          if (generatedImages[angle]) {
+                            setCurrentViewAngle(angle)
+                            setImageKey(prev => prev + 1)
+                          }
+                        }}
+                      />
+
+                      <div className="relative aspect-[3/4] w-full rounded-lg overflow-hidden border-2 border-primary/30 bg-background shadow-lg">
                         <img
-                          src={generatedImage}
-                          alt="Generated virtual try-on"
-                          className="w-full h-full object-cover"
-                          style={{ display: "block" }}
-                          onError={(e) => {
-                            console.error("Image load error:", e)
-                            console.error("Failed image URL:", generatedImage.substring(0, 100))
-                            setError("Failed to load generated image. Check console for details.")
+                          key={`img-${imageKey}-${currentViewAngle}`}
+                          src={currentGeneratedImage}
+                          alt={`Generated virtual try-on - ${currentViewAngle} view`}
+                          className="w-full h-full object-contain bg-white"
+                          style={{ 
+                            display: "block", 
+                            minHeight: "400px",
+                            width: "100%",
+                            height: "100%",
+                            backgroundColor: "#ffffff",
+                            objectFit: "contain"
                           }}
-                          onLoad={() => {
-                            console.log("✅ Image loaded successfully")
+                          onError={(e) => {
+                            console.error("❌ Image load error:", e)
+                            console.error("Failed image URL:", currentGeneratedImage)
+                            setError(`Failed to load ${currentViewAngle} view. Check browser console for errors.`)
+                          }}
+                          onLoad={(e) => {
+                            console.log(`✅ ${currentViewAngle} view loaded successfully!`)
+                            setError(null)
                           }}
                         />
+                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                          ✓ {currentViewAngle.charAt(0).toUpperCase() + currentViewAngle.slice(1)}
+                        </div>
                       </div>
-                      <Button
-                        onClick={handleDownload}
-                        className="w-full gap-2"
-                        variant="outline"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download High-Quality Image
-                      </Button>
-                      {generatedImage === uploadedImage && (
-                        <p className="text-xs text-muted-foreground text-center bg-blue-50 dark:bg-blue-950 p-2 rounded">
-                          ℹ️ Demo mode: Showing your uploaded image. Add FASHN_API_KEY for real AI generation.
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleDownload}
+                          className="flex-1 gap-2"
+                          variant="outline"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download {currentViewAngle.charAt(0).toUpperCase() + currentViewAngle.slice(1)} View
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            navigator.clipboard.writeText(currentGeneratedImage)
+                            alert("Image URL copied to clipboard!")
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          title="Copy image URL"
+                        >
+                          📋
+                        </Button>
+                      </div>
+                      {error && (
+                        <p className="text-xs text-destructive text-center p-2 rounded bg-destructive/10">
+                          ⚠️ {error}
                         </p>
                       )}
                     </div>
