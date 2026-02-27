@@ -34,6 +34,7 @@ export default function GeneratePage() {
   const [currentViewAngle, setCurrentViewAngle] = useState<string>("front") // Current viewing angle
   const [imageKey, setImageKey] = useState(0) // Force re-render key
   const [error, setError] = useState<string | null>(null)
+  const [generationProgress, setGenerationProgress] = useState<string>("") // Progress message
 
   useEffect(() => {
     // Load uploaded image from sessionStorage
@@ -68,13 +69,16 @@ export default function GeneratePage() {
         blob = await response.blob()
       }
 
-      // Generate all 4 angles
+      // Generate all 4 angles IN PARALLEL for faster generation
       const angles = ["front", "side", "back", "side-back"]
       const generatedResults: Record<string, string> = {}
 
-      for (const angle of angles) {
+      setGenerationProgress("Starting generation for all 4 angles...")
+
+      // Generate all angles in parallel
+      const generationPromises = angles.map(async (angle) => {
         try {
-          console.log(`Generating ${angle} view...`)
+          setGenerationProgress(`Generating ${angle} view...`)
 
           const formData = new FormData()
           formData.append("image", blob, uploadedFileName)
@@ -92,22 +96,38 @@ export default function GeneratePage() {
           if (!apiResponse.ok) {
             const errorData = await apiResponse.json().catch(() => ({ error: "Unknown error" }))
             console.error(`API error for ${angle}:`, errorData.error)
-            continue // Skip this angle and continue with others
+            return { angle, imageUrl: null, error: errorData.error }
           }
 
           const data = await apiResponse.json()
           
           if (data.imageUrl) {
+            // Update results as each completes (progressive loading)
             generatedResults[angle] = data.imageUrl
+            setGeneratedImages({ ...generatedResults })
+            setImageKey(prev => prev + 1)
             console.log(`✅ Generated ${angle} view`)
+            return { angle, imageUrl: data.imageUrl }
           } else {
             console.warn(`⚠️ No image URL for ${angle} view`)
+            return { angle, imageUrl: null }
           }
         } catch (angleError) {
           console.error(`Error generating ${angle} view:`, angleError)
-          // Continue with other angles
+          return { angle, imageUrl: null, error: angleError instanceof Error ? angleError.message : String(angleError) }
         }
-      }
+      })
+
+      // Wait for all generations to complete (in parallel)
+      setGenerationProgress("Generating all angles in parallel... This may take 30-60 seconds")
+      const results = await Promise.all(generationPromises)
+      
+      // Collect successful results
+      results.forEach((result) => {
+        if (result.imageUrl) {
+          generatedResults[result.angle] = result.imageUrl
+        }
+      })
 
       if (Object.keys(generatedResults).length === 0) {
         throw new Error("Failed to generate any images. Please try again.")
@@ -319,11 +339,16 @@ export default function GeneratePage() {
                       <div className="text-center">
                         <LoadingSpinner size="lg" className="mx-auto mb-4" />
                         <p className="text-sm text-muted-foreground">
-                          Generating your virtual try-on...
+                          {generationProgress || "Generating your virtual try-on..."}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                          This may take 10-30 seconds
+                          Generating all 4 angles in parallel... This may take 30-60 seconds
                         </p>
+                        {Object.keys(generatedImages).length > 0 && (
+                          <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                            ✅ {Object.keys(generatedImages).length}/4 angles completed
+                          </p>
+                        )}
                       </div>
                     </div>
                   ) : currentGeneratedImage ? (
