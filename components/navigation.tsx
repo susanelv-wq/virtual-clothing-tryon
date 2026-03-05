@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Sparkles, History } from "lucide-react"
+import { Sparkles, History, User, Shirt } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function Navigation() {
@@ -17,7 +17,27 @@ export function Navigation() {
             <Sparkles className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">Virtual Try-On</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Link href="/try-on">
+              <Button
+                variant={pathname === "/try-on" ? "default" : "ghost"}
+                size="sm"
+                className="gap-2"
+              >
+                <User className="h-4 w-4" />
+                Try on yourself
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button
+                variant={pathname === "/" ? "default" : "ghost"}
+                size="sm"
+                className="gap-2"
+              >
+                <Shirt className="h-4 w-4" />
+                Show on model
+              </Button>
+            </Link>
             <Link href="/history">
               <Button
                 variant={pathname === "/history" ? "default" : "ghost"}

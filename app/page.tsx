@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { UploadZone } from "@/components/upload-zone"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Sparkles, ArrowRight } from "lucide-react"
 
@@ -41,12 +43,27 @@ export default function HomePage() {
               Virtual Try-On Studio
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Upload your clothing and see it on professional models with AI-powered virtual try-on technology
+              Show your clothes on professional models, or try store items on yourself—upload a photo and choose any garment
             </p>
+            <div className="flex flex-wrap justify-center gap-4 mt-6">
+              <Link
+                href="/try-on"
+                className={cn(buttonVariants({ size: "lg", variant: "default" }), "gap-2")}
+              >
+                Try clothes on yourself
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/#upload-section"
+                className={cn(buttonVariants({ size: "lg", variant: "outline" }), "gap-2")}
+              >
+                Show on model
+              </Link>
+            </div>
           </div>
 
           {/* Upload Zone */}
-          <Card className="mb-6">
+          <Card id="upload-section" className="mb-6">
             <CardHeader>
               <CardTitle>Step 1: Upload Your Clothing</CardTitle>
               <CardDescription>
