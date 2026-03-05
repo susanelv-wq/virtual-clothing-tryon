@@ -130,7 +130,7 @@ export default function TryOnPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen ocean-flow-bg">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <Button
@@ -143,8 +143,8 @@ export default function TryOnPage() {
           </Button>
 
           <div className="text-center mb-10">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              Try clothes on yourself
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Ocean Heaven — Try clothes on yourself
             </h1>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Upload your photo and pick any garment from the store (or upload your own) to see how it looks on you.

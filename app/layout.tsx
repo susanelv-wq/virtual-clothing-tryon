@@ -6,8 +6,8 @@ import { Navigation } from "@/components/navigation";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Virtual Try-On | AI-Powered Clothing Visualization",
-  description: "Upload your clothing and see it on professional models with AI-powered virtual try-on",
+  title: "Ocean Heaven | Virtual Try-On | AI-Powered Clothing",
+  description: "Ocean Heaven — Upload your clothing and see it on professional models. Beautiful ocean-inspired virtual try-on.",
 };
 
 export default function RootLayout({

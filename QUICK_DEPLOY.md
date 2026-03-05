@@ -79,7 +79,7 @@ server {
     server_name cobabaju.online www.cobabaju.online;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -180,9 +180,9 @@ sudo systemctl status nginx
 sudo nginx -t
 ```
 
-### Check if port 3000 is listening
+### Check if port 3001 is listening
 ```bash
-sudo netstat -tulpn | grep 3000
+sudo netstat -tulpn | grep 3001
 ```
 
 ### Test domain DNS
@@ -204,6 +204,6 @@ pm2 status
 echo "=== Nginx Status ==="
 sudo systemctl status nginx --no-pager
 
-echo "=== Port 3000 ==="
-sudo netstat -tulpn | grep 3000
+echo "=== Port 3001 ==="
+sudo netstat -tulpn | grep 3001
 ```

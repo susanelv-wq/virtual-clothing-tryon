@@ -61,7 +61,7 @@ export default function HistoryPage() {
 
   if (history.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="min-h-screen ocean-flow-bg">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl mx-auto">
             <Button
@@ -89,7 +89,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen ocean-flow-bg">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6 flex items-center justify-between">
@@ -102,7 +102,7 @@ export default function HistoryPage() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Home
               </Button>
-              <h1 className="text-3xl font-bold">Generation History</h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">Ocean Heaven — Generation History</h1>
               <p className="text-muted-foreground mt-2">
                 View and download your previous virtual try-on images
               </p>

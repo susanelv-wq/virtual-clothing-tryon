@@ -31,17 +31,30 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto px-4 py-16">
+    <div className="min-h-screen ocean-flow-bg relative overflow-hidden">
+      {/* Decorative ocean waves */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -bottom-20 -left-20 w-96 h-96 rounded-full bg-primary/5 ocean-wave" />
+        <div className="absolute top-1/4 -right-16 w-80 h-80 rounded-full bg-primary/8 ocean-wave ocean-wave-delay-1" />
+        <div className="absolute bottom-1/3 left-1/4 w-64 h-64 rounded-full bg-primary/6 ocean-wave ocean-wave-delay-2" />
+        <svg className="absolute bottom-0 left-0 w-full h-32 text-primary/10 fill-current" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path d="M0,60 C150,120 350,0 600,60 C850,120 1050,0 1200,60 L1200,120 L0,120 Z" />
+        </svg>
+        <svg className="absolute bottom-0 left-0 w-full h-24 text-primary/8 fill-current" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path d="M0,80 C200,40 400,100 600,80 C800,60 1000,100 1200,80 L1200,120 L0,120 Z" />
+        </svg>
+      </div>
+      <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/15 mb-6 ring-2 ring-primary/20">
               <Sparkles className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Virtual Try-On Studio
+            <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+              Ocean Heaven
             </h1>
+            <p className="text-lg font-medium text-foreground/90 mb-2">Virtual Try-On Studio</p>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Show your clothes on professional models, or try store items on yourself—upload a photo and choose any garment
             </p>
@@ -63,7 +76,7 @@ export default function HomePage() {
           </div>
 
           {/* Upload Zone */}
-          <Card id="upload-section" className="mb-6">
+          <Card id="upload-section" className="mb-6 border-primary/20 shadow-lg shadow-primary/5">
             <CardHeader>
               <CardTitle>Step 1: Upload Your Clothing</CardTitle>
               <CardDescription>

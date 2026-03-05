@@ -15,7 +15,7 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">Virtual Try-On</span>
+            <span className="text-xl font-bold">Ocean Heaven</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link href="/try-on">
