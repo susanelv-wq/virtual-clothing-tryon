@@ -5,6 +5,24 @@ import { uploadToCloudinary, bufferToDataURL } from "@/lib/image-storage"
 
 const FASHN_API_KEY = process.env.FASHN_API_KEY || ""
 
+const ALLOWED_GARMENT_HOSTS = [
+  "oceanheaven.shop",
+  "www.oceanheaven.shop",
+  "i0.wp.com",
+  "i1.wp.com",
+  "i2.wp.com",
+  "images.unsplash.com",
+]
+
+function isAllowedGarmentUrl(u: string): boolean {
+  try {
+    const url = new URL(u)
+    return url.protocol === "https:" && ALLOWED_GARMENT_HOSTS.includes(url.hostname)
+  } catch {
+    return false
+  }
+}
+
 /**
  * Customer try-on: person photo + garment (from store product or upload).
  * Uses FASHN API with customer's photo as model_image and selected garment as garment_image.
@@ -15,6 +33,7 @@ export async function POST(request: NextRequest) {
     const personImageFile = formData.get("personImage") as File | null
     const garmentImageFile = formData.get("garmentImage") as File | null
     const productId = (formData.get("productId") as string) || ""
+    const productImageUrl = (formData.get("productImageUrl") as string) || ""
 
     if (!personImageFile || !personImageFile.size) {
       return NextResponse.json(
@@ -35,16 +54,22 @@ export async function POST(request: NextRequest) {
         .toBuffer()
         .catch(async () => sharp(buffer).jpeg({ quality: 98, mozjpeg: true }).toBuffer())
       garmentImageDataUrl = bufferToDataURL(processed, "image/png")
-    } else if (productId) {
-      // Garment from store product
-      const product = getStoreProduct(productId)
-      if (!product?.imageUrl) {
+    } else if (productImageUrl || productId) {
+      // Garment from store product (live catalog URL or static fallback)
+      let garmentUrl = ""
+      if (productImageUrl && isAllowedGarmentUrl(productImageUrl)) {
+        garmentUrl = productImageUrl
+      } else if (productId) {
+        const product = getStoreProduct(productId)
+        garmentUrl = product?.imageUrl || ""
+      }
+      if (!garmentUrl) {
         return NextResponse.json(
           { error: "Product not found or has no image." },
           { status: 400 }
         )
       }
-      const res = await fetch(product.imageUrl, { signal: AbortSignal.timeout(15000) })
+      const res = await fetch(garmentUrl, { signal: AbortSignal.timeout(15000) })
       if (!res.ok) throw new Error("Failed to fetch product image")
       const arrayBuffer = await res.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,10 +11,20 @@ import { getStoreProducts, type StoreProduct } from "@/lib/store-products"
 import { useDropzone } from "react-dropzone"
 import { cn } from "@/lib/utils"
 
-const storeProducts = getStoreProducts()
-
 export default function TryOnPage() {
   const router = useRouter()
+  const [storeProducts, setStoreProducts] = useState<StoreProduct[]>(getStoreProducts())
+
+  useEffect(() => {
+    fetch("/api/store-products")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.products) && d.products.length > 0) {
+          setStoreProducts(d.products)
+        }
+      })
+      .catch(() => {})
+  }, [])
   const [personPhoto, setPersonPhoto] = useState<string | null>(null)
   const [personFile, setPersonFile] = useState<File | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null)
@@ -87,6 +97,7 @@ export default function TryOnPage() {
 
       if (selectedProduct) {
         formData.append("productId", selectedProduct.id)
+        formData.append("productImageUrl", selectedProduct.imageUrl)
       } else if (customGarmentFile) {
         formData.append("garmentImage", customGarmentFile, customGarmentFile.name)
       }
