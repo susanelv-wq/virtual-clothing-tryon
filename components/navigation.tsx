@@ -28,9 +28,9 @@ export function Navigation() {
                 Try on yourself
               </Button>
             </Link>
-            <Link href="/">
+            <Link href="/model">
               <Button
-                variant={pathname === "/" ? "default" : "ghost"}
+                variant={pathname === "/model" ? "default" : "ghost"}
                 size="sm"
                 className="gap-2"
               >

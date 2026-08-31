@@ -5,14 +5,12 @@ import Image from "next/image"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { ArrowLeft, User, Shirt, Download, Check } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { User, Shirt, Download, Check } from "lucide-react"
 import { getStoreProducts, type StoreProduct } from "@/lib/store-products"
 import { useDropzone } from "react-dropzone"
 import { cn } from "@/lib/utils"
 
 export default function TryOnPage() {
-  const router = useRouter()
   const [storeProducts, setStoreProducts] = useState<StoreProduct[]>(getStoreProducts())
 
   useEffect(() => {
@@ -144,15 +142,6 @@ export default function TryOnPage() {
     <div className="min-h-screen ocean-flow-bg">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => router.push("/")}
-            className="mb-6 gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to home
-          </Button>
-
           <div className="text-center mb-10">
             <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
               Ocean Heaven — Try clothes on yourself

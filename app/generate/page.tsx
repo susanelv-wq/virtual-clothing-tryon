@@ -44,7 +44,7 @@ export default function GeneratePage() {
       setUploadedImage(image)
       setUploadedFileName(fileName || "clothing.jpg")
     } else {
-      router.push("/")
+      router.push("/model")
     }
   }, [router])
 
@@ -209,7 +209,7 @@ export default function GeneratePage() {
           <div className="mb-6">
             <Button
               variant="ghost"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/model")}
               className="mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
