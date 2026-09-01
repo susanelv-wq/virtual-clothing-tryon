@@ -26,8 +26,6 @@ export default function TryOnPage() {
   const [personPhoto, setPersonPhoto] = useState<string | null>(null)
   const [personFile, setPersonFile] = useState<File | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null)
-  const [customGarmentFile, setCustomGarmentFile] = useState<File | null>(null)
-  const [customGarmentPreview, setCustomGarmentPreview] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [resultImage, setResultImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -42,17 +40,6 @@ export default function TryOnPage() {
     }
   }
 
-  const onGarmentDrop = (accepted: File[]) => {
-    const file = accepted[0]
-    if (file) {
-      setCustomGarmentFile(file)
-      setSelectedProduct(null)
-      const reader = new FileReader()
-      reader.onloadend = () => setCustomGarmentPreview(reader.result as string)
-      reader.readAsDataURL(file)
-    }
-  }
-
   const personDropzone = useDropzone({
     onDrop: onPersonDrop,
     accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp"] },
@@ -60,20 +47,11 @@ export default function TryOnPage() {
     maxSize: 10 * 1024 * 1024,
   })
 
-  const garmentDropzone = useDropzone({
-    onDrop: onGarmentDrop,
-    accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp"] },
-    maxFiles: 1,
-    maxSize: 10 * 1024 * 1024,
-  })
-
   const handleSelectProduct = (product: StoreProduct) => {
     setSelectedProduct(product)
-    setCustomGarmentFile(null)
-    setCustomGarmentPreview(null)
   }
 
-  const hasGarment = selectedProduct || customGarmentFile
+  const hasGarment = selectedProduct
 
   const handleTryOn = async () => {
     if (!personFile || !personPhoto) {
@@ -81,7 +59,7 @@ export default function TryOnPage() {
       return
     }
     if (!hasGarment) {
-      setError("Please choose a garment from the store or upload your own clothing photo.")
+      setError("Please choose a garment from the store.")
       return
     }
 
@@ -96,8 +74,6 @@ export default function TryOnPage() {
       if (selectedProduct) {
         formData.append("productId", selectedProduct.id)
         formData.append("productImageUrl", selectedProduct.imageUrl)
-      } else if (customGarmentFile) {
-        formData.append("garmentImage", customGarmentFile, customGarmentFile.name)
       }
 
       const res = await fetch("/api/try-on-customer", {
@@ -147,7 +123,7 @@ export default function TryOnPage() {
               Ocean Heaven — Try clothes on yourself
             </h1>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Upload your photo and pick any garment from the store (or upload your own) to see how it looks on you.
+              Upload a full body photo of yourself and pick a garment from the store to see how it looks on you.
             </p>
           </div>
 
@@ -161,7 +137,7 @@ export default function TryOnPage() {
                     Step 1: Your photo
                   </CardTitle>
                   <CardDescription>
-                    Upload a clear photo of yourself (full or upper body works best)
+                    Upload a clear FULL BODY photo of yourself (head to toe)
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -216,7 +192,7 @@ export default function TryOnPage() {
                     Step 2: Choose a garment
                   </CardTitle>
                   <CardDescription>
-                    Pick from the store or upload your own clothing image
+                    Pick one of our garments to try on
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -253,45 +229,6 @@ export default function TryOnPage() {
                     ))}
                   </div>
 
-                  <p className="text-sm font-medium pt-2">Or upload your own</p>
-                  {customGarmentPreview ? (
-                    <div className="relative aspect-square max-w-[200px] rounded-lg overflow-hidden border">
-                      <Image
-                        src={customGarmentPreview}
-                        alt="Your garment"
-                        fill
-                        className="object-cover"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => {
-                          setCustomGarmentFile(null)
-                          setCustomGarmentPreview(null)
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ) : (
-                    <div
-                      {...garmentDropzone.getRootProps()}
-                      className={cn(
-                        "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-                        garmentDropzone.isDragActive
-                          ? "border-primary bg-primary/5"
-                          : "border-muted-foreground/25 hover:border-primary/50"
-                      )}
-                    >
-                      <input {...garmentDropzone.getInputProps()} />
-                      <p className="text-sm text-muted-foreground">
-                        {garmentDropzone.isDragActive
-                          ? "Drop here"
-                          : "Upload clothing photo"}
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
